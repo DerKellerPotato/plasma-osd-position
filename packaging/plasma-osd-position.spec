@@ -1,5 +1,5 @@
 Name:           plasma-osd-position
-Version:        0.1.0
+Version:        0.2.0
 Release:        1%{?dist}
 Summary:        Position der Plasma-Bildschirmanzeige (OSD) grafisch einstellen
 BuildArch:      noarch
@@ -35,5 +35,8 @@ install -m 0644 data/org.kde.plasma-osd-position.desktop %{buildroot}%{_datadir}
 %{_datadir}/applications/org.kde.plasma-osd-position.desktop
 
 %changelog
+* Tue Aug 25 2026 Tim <tim@example.invalid> - 0.2.0-1
+- Bedienung auf unteren Rand plus Ausrichtung umgestellt, Vorschau ueber alle Bildschirme
+
 * Tue Aug 25 2026 Tim <tim@example.invalid> - 0.1.0-1
 - Erste Version

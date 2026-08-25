@@ -10,10 +10,10 @@ Fenstertyp *On-Screen Display* matcht und sowohl **Position** als auch
 
 ## Funktionen
 
-- 3×3-Raster für die üblichen Ankerpunkte plus freier Randabstand
+- Abstand zum unteren Bildschirmrand plus horizontale Ausrichtung (mittig/links/rechts)
 - Multi-Monitor: Zielbildschirm auswählbar, X/Y werden in globalen Koordinaten berechnet
-- X/Y jederzeit manuell überschreibbar
-- Maßstabsgetreue Vorschau
+- Vorschau aller Bildschirme in ihrer tatsächlichen Anordnung
+- Feinjustierung über Versatz X/Y und die angenommene OSD-Größe
 - Regel anwenden, testen (`org.kde.osdService`) und wieder entfernen
 - KWin lädt die Konfiguration direkt neu (`qdbus org.kde.KWin /KWin reconfigure`)
 
@@ -86,8 +86,12 @@ qdbus6 org.kde.KWin /KWin reconfigure
 
 ## Bekannte Grenzen
 
-- Die Regel setzt die **linke obere Ecke** des Fensters. Für rechte und untere
-  Anker wird die OSD-Größe benötigt; die Vorgabewerte sind eine Schätzung und
+- **Eine Regel = eine absolute Position.** KWin kennt keine bildschirmrelative
+  Angabe, deshalb erscheint das OSD nach dem Anwenden immer auf dem gewählten
+  Monitor und folgt nicht mehr dem aktiven. Ein einheitlicher unterer Abstand
+  über mehrere Bildschirme hinweg ist damit nicht ausdrückbar.
+- Die Regel setzt die **linke obere Ecke** des Fensters. Für den unteren Rand
+  wird deshalb die OSD-Höhe benötigt; die Vorgabewerte sind eine Schätzung und
   im Dialog anpassbar.
 - Bei fraktionaler Skalierung können die logischen Qt-Koordinaten von den
   Koordinaten abweichen, die KWin für die Regel verwendet – dann X/Y manuell
