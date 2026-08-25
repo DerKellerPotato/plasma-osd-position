@@ -1,42 +1,47 @@
 # plasma-osd-position
 
-Kleine Qt-Anwendung, um die Position des Lautstärke- und Helligkeits-OSD von
-KDE Plasma grafisch festzulegen.
+> **Heads up:** This project was built with AI assistance (Claude) and is provided as-is.
+> It scratches a very specific personal itch and will most likely **not** receive
+> ongoing maintenance. Feel free to fork it, open PRs, or use it as a starting
+> point for your own tool — just don't expect active support.
 
-Plasma bietet dafür keine eigene Einstellung – das OSD wird von KWin selbst
-gezeichnet. Der einzige unterstützte Weg ist eine Fensterregel, die auf den
-Fenstertyp *On-Screen Display* matcht und sowohl **Position** als auch
-**Anfangsplatzierung** erzwingt. Genau diese Regel legt das Programm an.
+A small Qt application to graphically set the position of KDE Plasma's volume
+and brightness OSD (on-screen display).
 
-## Funktionen
+Plasma doesn't offer a built-in setting for this — the OSD is drawn by KWin
+itself. The only supported way to move it is a window rule that matches the
+*On-Screen Display* window type and forces both **position** and **initial
+placement**. That's exactly the rule this program creates for you.
 
-- Abstand zum unteren Bildschirmrand plus horizontale Ausrichtung (mittig/links/rechts)
-- Multi-Monitor: Zielbildschirm auswählbar, X/Y werden in globalen Koordinaten berechnet
-- Vorschau aller Bildschirme in ihrer tatsächlichen Anordnung
-- Feinjustierung über Versatz X/Y und die angenommene OSD-Größe
-- Regel anwenden, testen (`org.kde.osdService`) und wieder entfernen
-- KWin lädt die Konfiguration direkt neu (`qdbus org.kde.KWin /KWin reconfigure`)
+## Features
 
-## Was genau geschrieben wird
+- Distance from the bottom screen edge plus horizontal alignment (center/left/right)
+- Multi-monitor support: target screen selectable, X/Y computed in global coordinates
+- Preview of all screens in their actual arrangement
+- Fine-tuning via X/Y offset and the assumed OSD size
+- Apply the rule, test it (`org.kde.osdService`), and remove it again
+- KWin reloads the configuration immediately (`qdbus org.kde.KWin /KWin reconfigure`)
 
-In `~/.config/kwinrulesrc` entsteht eine Gruppe mit eigener UUID:
+## What exactly gets written
+
+A group with its own UUID is created in `~/.config/kwinrulesrc`:
 
 ```ini
 [<uuid>]
-Description=OSD-Position (plasma-osd-position)
+Description=OSD position (plasma-osd-position)
 types=65536        # NET::OnScreenDisplayMask == 1 << 16
-position=X,Y       # KConfig serialisiert QPoint als "x,y"
+position=X,Y       # KConfig serializes QPoint as "x,y"
 positionrule=2     # KWin Rules::Force
 placement=0        # KWin Placement::NoPlacement
 placementrule=2    # KWin Rules::Force
 ```
 
-Zusätzlich werden `count` und `rules` in der Gruppe `[General]` gepflegt.
-Ohne das erzwungene `placement=0` überschreibt KWin die Koordinaten mit seiner
-eigenen Platzierung – deshalb setzt das Programm beide Werte gemeinsam.
+`count` and `rules` in the `[General]` group are updated as well. Without the
+forced `placement=0`, KWin would override the coordinates with its own
+placement logic — that's why the program sets both values together.
 
-Geschrieben wird über `kwriteconfig6` (Fallback `kwriteconfig5`), damit
-KConfig-Semantik und Dateiformat erhalten bleiben.
+Writing happens via `kwriteconfig6` (falling back to `kwriteconfig5`) so that
+KConfig semantics and the file format are preserved.
 
 ## Installation
 
@@ -52,53 +57,52 @@ Fedora / openSUSE:
 sudo dnf install ./plasma-osd-position-0.1.0-1.noarch.rpm
 ```
 
-Ohne Paket direkt aus dem Quellbaum:
+Directly from source, without a package:
 
 ```bash
 python3 src/plasma_osd_position/__main__.py
 ```
 
-Laufzeitabhängigkeiten: `python3`, PyQt6 (`python3-pyqt6`), `kwriteconfig6`
-aus KConfig sowie `qdbus6` für Reload und Test-OSD.
+Runtime dependencies: `python3`, PyQt6 (`python3-pyqt6`), `kwriteconfig6` from
+KConfig, and `qdbus6` for reload and the test OSD.
 
-## Pakete selbst bauen
+## Building packages yourself
 
 ```bash
 mkdir -p dist
-./packaging/build-deb.sh    # braucht dpkg-deb
-./packaging/build-rpm.sh    # braucht rpmbuild
+./packaging/build-deb.sh    # needs dpkg-deb
+./packaging/build-rpm.sh    # needs rpmbuild
 ```
 
-Der GitHub-Actions-Workflow `.github/workflows/build.yml` baut beide Pakete bei
-jedem `v*`-Tag und hängt sie an das Release.
+The GitHub Actions workflow `.github/workflows/build.yml` builds both
+packages on every `v*` tag and attaches them to the release.
 
-## Ausrollen über Ansible
+## Rolling out via Ansible
 
-Die Regel ist reine Benutzerkonfiguration. Für eine einheitliche Position auf
-allen Arbeitsplätzen reicht es, die Regel einmal lokal zu setzen und den
-Abschnitt aus `~/.config/kwinrulesrc` per `community.general.ini_file` (oder als
-Template) auf die Zielrechner zu bringen – die UUID kann dabei identisch
-bleiben. Danach je Benutzersitzung:
+The rule is pure user configuration. For a consistent position across
+multiple workstations, it's enough to set the rule once locally and ship the
+resulting section of `~/.config/kwinrulesrc` to the target machines via
+`community.general.ini_file` (or as a template) — the UUID can stay identical.
+Afterwards, per user session:
 
 ```bash
 qdbus6 org.kde.KWin /KWin reconfigure
 ```
 
-## Bekannte Grenzen
+## Known limitations
 
-- **Eine Regel = eine absolute Position.** KWin kennt keine bildschirmrelative
-  Angabe, deshalb erscheint das OSD nach dem Anwenden immer auf dem gewählten
-  Monitor und folgt nicht mehr dem aktiven. Ein einheitlicher unterer Abstand
-  über mehrere Bildschirme hinweg ist damit nicht ausdrückbar.
-- Die Regel setzt die **linke obere Ecke** des Fensters. Für den unteren Rand
-  wird deshalb die OSD-Höhe benötigt; die Vorgabewerte sind eine Schätzung und
-  im Dialog anpassbar.
-- Bei fraktionaler Skalierung können die logischen Qt-Koordinaten von den
-  Koordinaten abweichen, die KWin für die Regel verwendet – dann X/Y manuell
-  nachziehen.
-- Getestet gegen Plasma 6. Ältere Plasma-5-Versionen speichern `placement`
-  teilweise noch als Zeichenkette.
+- **One rule = one absolute position.** KWin has no concept of a
+  screen-relative position, so once the rule is applied the OSD always
+  appears on the chosen monitor and no longer follows the active one. A
+  consistent bottom margin across multiple screens can't be expressed this way.
+- The rule sets the window's **top-left corner**. To anchor to the bottom
+  edge, the OSD height is therefore needed; the default values are an
+  estimate and adjustable in the dialog.
+- With fractional scaling, the logical Qt coordinates can differ from the
+  coordinates KWin uses for the rule — adjust X/Y manually in that case.
+- Tested against Plasma 6. Older Plasma 5 versions sometimes still store
+  `placement` as a string.
 
-## Lizenz
+## License
 
 MIT
