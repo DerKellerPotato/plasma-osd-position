@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=OSD Position
+Name[de]=OSD-Position
+GenericName=Position of the Plasma on-screen display
+GenericName[de]=Position der Plasma-Bildschirmanzeige
+Comment=Move the Plasma volume and brightness OSD via a KWin window rule
+Comment[de]=Lautstärke- und Helligkeits-OSD von Plasma per KWin-Fensterregel verschieben
+Exec=plasma-osd-position
+Icon=preferences-desktop-display
+Terminal=false
+Categories=Qt;KDE;Settings;DesktopSettings;
+Keywords=OSD;volume;brightness;KWin;position;
+Keywords[de]=OSD;Lautstärke;Helligkeit;KWin;Position;

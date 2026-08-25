@@ -1,0 +1,35 @@
+name: build
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  packages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Abhängigkeiten
+        run: sudo apt-get update && sudo apt-get install -y rpm dpkg-dev
+
+      - name: Syntaxprüfung
+        run: python3 -m py_compile src/plasma_osd_position/*.py
+
+      - name: .deb bauen
+        run: mkdir -p dist && ./packaging/build-deb.sh
+
+      - name: .rpm bauen
+        run: ./packaging/build-rpm.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pakete
+          path: dist/*
+
+      - name: Release-Assets anhängen
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*

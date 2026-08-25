@@ -1,0 +1,3 @@
+#!/bin/sh
+# Wrapper: startet die Anwendung aus /usr/share/plasma-osd-position
+exec python3 /usr/share/plasma-osd-position/plasma_osd_position/__main__.py "$@"
