@@ -20,10 +20,16 @@ curl -fsSL -o python.AppImage "$PYTHON_URL"
 chmod +x python.AppImage
 ./python.AppImage --appimage-extract >/dev/null
 
+# Das AppDir komplett übernehmen: Python findet seine Bibliotheken (libssl,
+# libffi, ...) über relative RPATHs in usr/lib.
 APPDIR="$WORK/AppDir"
-install -d "$APPDIR/opt" "$APPDIR/usr/share/metainfo"
-mv "squashfs-root/opt/python$PYTHON_SERIES" "$APPDIR/opt/python"
+mv squashfs-root "$APPDIR"
+rm -f "$APPDIR/AppRun" "$APPDIR/.DirIcon" "$APPDIR"/*.desktop "$APPDIR"/*.png "$APPDIR"/*.svg
+rm -rf "$APPDIR/usr/share/metainfo"
+install -d "$APPDIR/usr/share/metainfo"
+ln -s "python$PYTHON_SERIES" "$APPDIR/opt/python"
 [ -e "$APPDIR/opt/python/bin/python3" ] || ln -s "python$PYTHON_SERIES" "$APPDIR/opt/python/bin/python3"
+"$APPDIR/opt/python/bin/python3" -c "import ssl"
 
 "$APPDIR/opt/python/bin/python3" -m pip install --no-cache-dir --no-warn-script-location PyQt6 >/dev/null
 # QML und Übersetzungen braucht die Widgets-Oberfläche nicht.
