@@ -42,8 +42,17 @@ class KWinRuleError(RuntimeError):
 
 
 # --- Hilfsfunktionen --------------------------------------------------------
+def in_flatpak() -> bool:
+    return os.path.exists("/.flatpak-info")
+
+
 def config_path() -> str:
-    base = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
+    # Im Flatpak zeigt XDG_CONFIG_HOME auf ~/.var/app/<id>/config - KWin liest
+    # aber die Datei des Hosts, die per --filesystem=xdg-config sichtbar ist.
+    if in_flatpak():
+        base = os.path.expanduser("~/.config")
+    else:
+        base = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
     return os.path.join(base, CONFIG_NAME)
 
 
@@ -112,15 +121,51 @@ def current_position() -> Optional[Tuple[int, int]]:
         return None
 
 
+def _write_lines(lines: List[str]) -> None:
+    path = config_path()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + ".plasma-osd-position.tmp"
+    with open(tmp, "w", encoding="utf-8") as handle:
+        handle.write("\n".join(lines).rstrip("\n") + "\n")
+    os.replace(tmp, path)
+
+
+def _write_key_direct(group: str, key: str, value: str) -> None:
+    """Ersatz für kwriteconfig, wenn es nicht verfügbar ist (z. B. im Flatpak).
+    Ändert nur die eine Zeile bzw. hängt sie an die Gruppe an; die Werte dieses
+    Programms brauchen kein KConfig-Escaping."""
+    lines = _read_lines()
+    header = f"[{group}]"
+    start = next((i for i, line in enumerate(lines) if line.strip() == header), None)
+    if start is None:
+        if lines and lines[-1].strip():
+            lines.append("")
+        _write_lines(lines + [header, f"{key}={value}"])
+        return
+
+    insert_at = start + 1
+    for index in range(start + 1, len(lines)):
+        stripped = lines[index].strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            break
+        name, sep, _ = stripped.partition("=")
+        if sep and name.strip() == key:
+            lines[index] = f"{key}={value}"
+            _write_lines(lines)
+            return
+        if stripped:
+            insert_at = index + 1
+    lines.insert(insert_at, f"{key}={value}")
+    _write_lines(lines)
+
+
 def _write_key(group: str, key: str, value: str) -> None:
     binary = kwriteconfig_bin()
     if not binary:
-        raise KWinRuleError(
-            "Weder kwriteconfig6 noch kwriteconfig5 gefunden - "
-            "läuft hier wirklich eine KDE-Plasma-Sitzung?"
-        )
+        _write_key_direct(group, key, value)
+        return
     result = subprocess.run(
-        [binary, "--file", CONFIG_NAME, "--group", group, "--key", key, value],
+        [binary, "--file", config_path(), "--group", group, "--key", key, value],
         capture_output=True,
         text=True,
     )
@@ -171,11 +216,7 @@ def remove_rule() -> bool:
         if not skipping:
             output.append(raw)
 
-    path = config_path()
-    tmp = path + ".plasma-osd-position.tmp"
-    with open(tmp, "w", encoding="utf-8") as handle:
-        handle.write("\n".join(output).rstrip("\n") + "\n")
-    os.replace(tmp, path)
+    _write_lines(output)
 
     general = _parse().get("General", {})
     remaining = [r for r in general.get("rules", "").split(",") if r and r != rule_uuid]
@@ -184,34 +225,38 @@ def remove_rule() -> bool:
     return True
 
 
+def _dbus_call(service: str, path: str, interface: str, method: str, *args: str) -> bool:
+    """Ruft eine Session-Bus-Methode auf - bevorzugt über QtDBus, sonst qdbus."""
+    try:
+        from PyQt6.QtDBus import QDBusConnection, QDBusMessage
+    except ImportError:
+        binary = qdbus_bin()
+        if not binary:
+            return False
+        result = subprocess.run(
+            [binary, service, path, f"{interface}.{method}", *args],
+            capture_output=True,
+            text=True,
+        )
+        return result.returncode == 0
+    message = QDBusMessage.createMethodCall(service, path, interface, method)
+    message.setArguments(list(args))
+    reply = QDBusConnection.sessionBus().call(message)
+    return reply.type() != QDBusMessage.MessageType.ErrorMessage
+
+
 def reconfigure() -> bool:
     """KWin die Konfiguration neu einlesen lassen."""
-    binary = qdbus_bin()
-    if not binary:
-        return False
-    result = subprocess.run(
-        [binary, "org.kde.KWin", "/KWin", "reconfigure"],
-        capture_output=True,
-        text=True,
-    )
-    return result.returncode == 0
+    return _dbus_call("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure")
 
 
 def show_test_osd(text: str = "Test") -> bool:
     """Zeigt über plasmashell ein OSD an, um die Position zu prüfen."""
-    binary = qdbus_bin()
-    if not binary:
-        return False
-    result = subprocess.run(
-        [
-            binary,
-            "org.kde.plasmashell",
-            "/org/kde/osdService",
-            "org.kde.osdService.showText",
-            "audio-volume-medium",
-            text,
-        ],
-        capture_output=True,
-        text=True,
+    return _dbus_call(
+        "org.kde.plasmashell",
+        "/org/kde/osdService",
+        "org.kde.osdService",
+        "showText",
+        "audio-volume-medium",
+        text,
     )
-    return result.returncode == 0

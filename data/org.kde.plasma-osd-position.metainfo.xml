@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.kde.plasma-osd-position</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>OSD Position</name>
+  <name xml:lang="de">OSD-Position</name>
+  <summary>Move the Plasma volume and brightness OSD</summary>
+  <summary xml:lang="de">Lautstärke- und Helligkeits-OSD von Plasma verschieben</summary>
+  <description>
+    <p>
+      Sets the position of the KDE Plasma on-screen display via a KWin window
+      rule that matches the On-Screen Display window type and forces both
+      position and initial placement.
+    </p>
+  </description>
+  <launchable type="desktop-id">org.kde.plasma-osd-position.desktop</launchable>
+  <url type="homepage">https://github.com/DerKellerPotato/plasma-osd-position</url>
+  <url type="bugtracker">https://github.com/DerKellerPotato/plasma-osd-position/issues</url>
+  <developer id="io.github.derkellerpotato">
+    <name>DerKellerPotato</name>
+  </developer>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.2.0" date="2026-08-25"/>
+    <release version="0.1.0" date="2026-08-25"/>
+  </releases>
+</component>

@@ -1,0 +1,15 @@
+# Wird von packaging/build-arch.sh aus dem Repo-Stand gebaut (kein Download).
+pkgname=plasma-osd-position
+pkgver=0.0.0
+pkgrel=1
+pkgdesc="Position der Plasma-Bildschirmanzeige (OSD) grafisch einstellen"
+arch=('any')
+url="https://github.com/DerKellerPotato/plasma-osd-position"
+license=('MIT')
+depends=('python' 'python-pyqt6')
+optdepends=('kconfig: kwriteconfig6 zum Schreiben der Regel')
+
+package() {
+  "$startdir/repo/packaging/install.sh" "$pkgdir" /usr
+  install -Dm0644 "$startdir/repo/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

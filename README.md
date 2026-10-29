@@ -45,17 +45,15 @@ KConfig semantics and the file format are preserved.
 
 ## Installation
 
-Debian / Ubuntu / Linux Mint:
+Every `v*` tag publishes these files on the GitHub release page:
 
-```bash
-sudo apt install ./plasma-osd-position_0.1.0_all.deb
-```
-
-Fedora / openSUSE:
-
-```bash
-sudo dnf install ./plasma-osd-position-0.1.0-1.noarch.rpm
-```
+| Distribution | File | Install |
+|---|---|---|
+| Debian / Ubuntu / Linux Mint / KDE neon | `plasma-osd-position_<ver>_all.deb` | `sudo apt install ./plasma-osd-position_*_all.deb` |
+| Fedora / openSUSE | `plasma-osd-position-<ver>-1.noarch.rpm` | `sudo dnf install ./plasma-osd-position-*.rpm` / `sudo zypper install ./plasma-osd-position-*.rpm` |
+| Arch / Manjaro / EndeavourOS / CachyOS | `plasma-osd-position-<ver>-1-any.pkg.tar.zst` | `sudo pacman -U ./plasma-osd-position-*.pkg.tar.zst` |
+| Any (Flatpak) | `plasma-osd-position-<ver>-x86_64.flatpak` | `flatpak install --user ./plasma-osd-position-*.flatpak` |
+| Any (AppImage, glibc ≥ 2.28) | `plasma-osd-position-<ver>-x86_64.AppImage` | `chmod +x` and run |
 
 Directly from source, without a package:
 
@@ -63,19 +61,29 @@ Directly from source, without a package:
 python3 src/plasma_osd_position/__main__.py
 ```
 
-Runtime dependencies: `python3`, PyQt6 (`python3-pyqt6`), `kwriteconfig6` from
-KConfig, and `qdbus6` for reload and the test OSD.
+Runtime dependencies: `python3` and PyQt6. `kwriteconfig6` is used when
+available; otherwise the program edits `kwinrulesrc` itself. KWin is reloaded
+via D-Bus (QtDBus, falling back to `qdbus6`).
+
+The Flatpak needs access to `~/.config` (`--filesystem=xdg-config`), because
+KWin reads the rule from the host's `kwinrulesrc`, and talks to
+`org.kde.KWin` and `org.kde.plasmashell` on the session bus.
 
 ## Building packages yourself
 
 ```bash
-mkdir -p dist
-./packaging/build-deb.sh    # needs dpkg-deb
-./packaging/build-rpm.sh    # needs rpmbuild
+./packaging/build-deb.sh       # needs dpkg-deb
+./packaging/build-rpm.sh       # needs rpmbuild
+./packaging/build-arch.sh      # needs makepkg (not as root)
+./packaging/build-appimage.sh  # downloads python-appimage, PyQt6 and appimagetool
+flatpak-builder --user --install-deps-from=flathub build \
+  packaging/flatpak/io.github.derkellerpotato.PlasmaOsdPosition.yml
 ```
 
-The GitHub Actions workflow `.github/workflows/build.yml` builds both
-packages on every `v*` tag and attaches them to the release.
+The GitHub Actions workflow `.github/workflows/build.yml` builds all formats
+on every push and PR, test-installs the native packages on Debian, Ubuntu,
+Fedora, openSUSE Tumbleweed and Arch, and attaches everything (plus
+`SHA256SUMS`) to the release on `v*` tags.
 
 ## Rolling out via Ansible
 

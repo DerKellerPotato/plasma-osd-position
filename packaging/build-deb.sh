@@ -8,15 +8,8 @@ BUILD="$(mktemp -d)"
 chmod 0755 "$BUILD"
 trap 'rm -rf "$BUILD"' EXIT
 
-install -d "$BUILD/DEBIAN" \
-           "$BUILD/usr/bin" \
-           "$BUILD/usr/share/plasma-osd-position/plasma_osd_position" \
-           "$BUILD/usr/share/applications" \
-           "$BUILD/usr/share/doc/plasma-osd-position"
-
-install -m 0644 "$ROOT"/src/plasma_osd_position/*.py "$BUILD/usr/share/plasma-osd-position/plasma_osd_position/"
-install -m 0755 "$ROOT/data/plasma-osd-position" "$BUILD/usr/bin/plasma-osd-position"
-install -m 0644 "$ROOT/data/org.kde.plasma-osd-position.desktop" "$BUILD/usr/share/applications/"
+"$ROOT/packaging/install.sh" "$BUILD" /usr
+install -d "$BUILD/DEBIAN" "$BUILD/usr/share/doc/plasma-osd-position"
 install -m 0644 "$ROOT/LICENSE" "$BUILD/usr/share/doc/plasma-osd-position/copyright"
 
 cat > "$BUILD/DEBIAN/control" <<CONTROL
@@ -25,9 +18,10 @@ Version: $VERSION
 Section: kde
 Priority: optional
 Architecture: all
-Depends: python3 (>= 3.9), python3-pyqt6, libkf6config-bin | kde-cli-tools | libkf5config-bin
-Recommends: qt6-tools-dev-tools
-Maintainer: Tim <tim@example.invalid>
+Depends: python3 (>= 3.9), python3-pyqt6
+Recommends: libkf6config-bin | libkf5config-bin
+Maintainer: DerKellerPotato <noreply@github.com>
+Homepage: https://github.com/DerKellerPotato/plasma-osd-position
 Description: Position der Plasma-Bildschirmanzeige (OSD) grafisch einstellen
  Verschiebt das Lautstaerke- und Helligkeits-OSD von KDE Plasma ueber eine
  KWin-Fensterregel, die auf den Fenstertyp "On-Screen Display" matcht und

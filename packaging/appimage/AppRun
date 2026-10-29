@@ -1,0 +1,6 @@
+#!/bin/sh
+# Startet die Anwendung mit dem mitgelieferten Python und PyQt6.
+HERE="$(dirname "$(readlink -f "$0")")"
+unset PYTHONHOME PYTHONPATH
+export PYTHONNOUSERSITE=1
+exec "$HERE/opt/python/bin/python3" -s "$HERE/opt/plasma-osd-position/plasma_osd_position/__main__.py" "$@"
