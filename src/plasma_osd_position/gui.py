@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from typing import List, Optional, Tuple
 
@@ -275,7 +276,7 @@ class MainWindow(QMainWindow):
         suffix = (
             "KWin hat die Konfiguration neu eingelesen."
             if reloaded
-            else "Bitte neu anmelden – qdbus wurde nicht gefunden."
+            else "KWin war per D-Bus nicht erreichbar – bitte neu anmelden."
         )
         self.status.setText(f"Regel gespeichert ({rect.x()},{rect.y()}). {suffix}")
 
@@ -304,7 +305,8 @@ def main() -> int:
     app = QApplication(sys.argv)
     app.setApplicationName("plasma-osd-position")
     app.setApplicationDisplayName("OSD-Position")
-    app.setDesktopFileName("org.kde.plasma-osd-position")
+    # Im Flatpak heißt die .desktop-Datei wie die App-ID.
+    app.setDesktopFileName(os.environ.get("FLATPAK_ID", "org.kde.plasma-osd-position"))
     window = MainWindow()
     window.resize(620, 680)
     window.show()

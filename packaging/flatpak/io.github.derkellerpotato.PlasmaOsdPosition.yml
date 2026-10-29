@@ -1,0 +1,39 @@
+app-id: io.github.derkellerpotato.PlasmaOsdPosition
+runtime: org.kde.Platform
+runtime-version: "6.10"
+sdk: org.kde.Sdk
+base: com.riverbankcomputing.PyQt.BaseApp
+base-version: "6.10"
+command: plasma-osd-position
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  # kwinrulesrc liegt in ~/.config des Hosts; KConfig und dieses Programm
+  # schreiben atomar (Temp-Datei + rename), deshalb das ganze Verzeichnis.
+  - --filesystem=xdg-config
+  - --talk-name=org.kde.KWin
+  - --talk-name=org.kde.plasmashell
+cleanup-commands:
+  - /app/cleanup-BaseApp.sh
+modules:
+  - name: plasma-osd-position
+    buildsystem: simple
+    build-commands:
+      - packaging/install.sh / /app
+      # Desktop-Datei, Icon und AppStream-ID an die Flatpak-App-ID anpassen.
+      - mv /app/share/applications/org.kde.plasma-osd-position.desktop /app/share/applications/${FLATPAK_ID}.desktop
+      - sed -i "s/^Icon=.*/Icon=${FLATPAK_ID}/" /app/share/applications/${FLATPAK_ID}.desktop
+      - mv /app/share/icons/hicolor/scalable/apps/plasma-osd-position.svg /app/share/icons/hicolor/scalable/apps/${FLATPAK_ID}.svg
+      - mv /app/share/metainfo/org.kde.plasma-osd-position.metainfo.xml /app/share/metainfo/${FLATPAK_ID}.metainfo.xml
+      - sed -i -e "s|<id>org.kde.plasma-osd-position</id>|<id>${FLATPAK_ID}</id>|" -e "s|org.kde.plasma-osd-position.desktop|${FLATPAK_ID}.desktop|" /app/share/metainfo/${FLATPAK_ID}.metainfo.xml
+    sources:
+      - type: dir
+        path: ../..
+        skip:
+          - dist
+          - .flatpak-builder
+          - flatpak-build
+          - flatpak-repo
+          - .git
